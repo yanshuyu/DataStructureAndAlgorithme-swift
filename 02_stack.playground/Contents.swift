@@ -9,7 +9,7 @@ myStack.push(2)
 myStack.push(3)
 myStack.push(4)
 print("after push 1,2,3,4, myStack: \(myStack)")
-print("top element: \(myStack.peek())")
+print("top element: \(myStack.top!)")
 
 myStack.pop()
 myStack.pop()
