@@ -123,3 +123,21 @@ print("test tree(dft): ")
 testTree.depthFirstTraverse { (value, stop) in
     print(value)
 }
+
+print("\n\n")
+print("test stop functional, bft:")
+testTree.breadthFirstTraverse { (value, stop) in
+    print(value)
+    if value >= 6 {
+        stop = true
+    }
+}
+print("test stop functional, dft:")
+testTree.depthFirstTraverse { (value, stop) in
+    print(value)
+    if value >= 6 {
+        stop = true
+    }
+}
+
+
