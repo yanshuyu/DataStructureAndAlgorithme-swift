@@ -33,6 +33,13 @@ public struct binarysearchtree<T: Comparable> {
         return abs(self.balanceFactor) < 2
     }
     
+    public var isBST: Bool {
+        if self.isEmpty {
+            return false
+        }
+        return isBST(node: self.root!)
+    }
+    
     public var isEmpty: Bool {
         return self._innerTree.isEmpty
     }
@@ -116,7 +123,8 @@ public struct binarysearchtree<T: Comparable> {
             self.root = balance(node: self.root!)
         }
         
-        assert(self.isBalance, "after insert value: \(value), bst is not balance!!!")
+        //assert(self.isBalance, "after insert value: \(value), bst is not balance!!!")
+        assert(self.isBST, "after insert \(value), tree is not BST!")
         
         return inserted
     }
@@ -129,6 +137,7 @@ public struct binarysearchtree<T: Comparable> {
         let removed = remove(value: value, from: self.root)
         if removed != nil && !self.isBalance {
             self.root = balance(node: self.root!)
+            assert(self.isBST, "after remove \(value), tree is not BST!")
         }
         return removed
     }
@@ -235,25 +244,21 @@ extension binarysearchtree {
         var newNode = node
         switch node.balanceFactor {
         case -2:
-            if let right = node.right, right.balanceFactor == 1 {
-                newNode = rightLeftRotation(node: node)
-                self.rlrCount += 1
-                print("ritht-left rotation +1")
-            } else {
+            if let right = node.right, let _ = right.right {
                 newNode = leftRotation(node: node)
                 self.lrCount += 1
-                print("left rotation +1")
+            } else {
+                newNode = rightLeftRotation(node: node)
+                self.rlrCount += 1
             }
             break
         case 2:
-            if let left = node.left, left.balanceFactor == -1 {
-                newNode = leftRightRotation(node: node)
-                self.lrrCount += 1
-                print("left-right rotation +1")
-            } else {
+            if let left = node.left, let _ = left.left {
                 newNode = rightRotation(node: node)
                 self.rrCount += 1
-                print("right rotation +1")
+            } else {
+                newNode = leftRightRotation(node: node)
+                self.lrrCount += 1
             }
             break
         default:
@@ -306,6 +311,35 @@ extension binarysearchtree {
         let newRight = rightRotation(node: right)
         node.addRight(newRight)
         return leftRotation(node: node)
+    }
+    
+    private func isBST(node: Node) -> Bool {
+        if node.isLeaf {
+            return true
+        }
+        
+        var isGreatThanLeft = false
+        var isLessThanRight = false
+        
+        if let left = node.left {
+            guard isBST(node: left) else {
+                return false
+            }
+            isGreatThanLeft = left.value < node.value
+        } else {
+            isGreatThanLeft = true
+        }
+        
+        if let right = node.right {
+            guard isBST(node: right) else {
+                return false
+            }
+            isLessThanRight = node.value < right.value
+        } else {
+            isLessThanRight = true
+        }
+        
+        return isGreatThanLeft && isLessThanRight
     }
 }
 
@@ -381,16 +415,16 @@ print("\n\n---------- AVL Tree -----------")
 
 func generateRandomNumbers(count: Int, min: Int, max: Int) -> [Int] {
     var numbers = [Int]()
-    
+
     for _ in 0..<count {
         numbers.append(Int.random(in: min...max))
     }
-    
+
     return numbers
 }
 
 var balanceTree = binarysearchtree<Int>()
-var numbers =  generateRandomNumbers(count: 50, min: 0, max: 100)
+var numbers =  generateRandomNumbers(count: 50, min: 0, max: 1000)
 numbers = [Int](Set(numbers))
 
 print("numbers: \(numbers)")
@@ -403,4 +437,14 @@ print("lefr rotattion count: \(balanceTree.lrCount)")
 print("right rotattion count: \(balanceTree.rrCount)")
 print("left-right rotattion count: \(balanceTree.lrrCount)")
 print("right-lefr rotattion count: \(balanceTree.rlrCount)")
+
+//var bst = binarysearchtree<Int>()
+//[1,6,3,4,9,8,33,5,7,10,22,0].forEach { (value) in
+//    bst.insert(value)
+//    print("after insert \(value), isBST: \(bst.isBST)")
+//    if !bst.isBST {
+//        print(bst)
+//    }
+//}
+
 
