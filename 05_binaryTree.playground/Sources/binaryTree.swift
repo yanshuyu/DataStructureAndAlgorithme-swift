@@ -3,12 +3,22 @@ import Foundation
 public struct binarytree<T> {
     public class Node {
         public var value: T
-        public var parent: Node?
+        public weak var parent: Node?
         public var left: Node?
         public var right: Node?
         
         public init(value: T) {
             self.value = value
+        }
+        
+        public var isRoot: Bool {
+            return self.parent == nil
+        }
+        public var isLeaf: Bool {
+            return self.left == nil && self.right == nil
+        }
+        public var count: Int {
+            return (self.left?.count ?? 0) + 1 + (self.right?.count ?? 0)
         }
         
         @discardableResult
@@ -47,6 +57,13 @@ public struct binarytree<T> {
     public var root: Node?
     public var isEmpty: Bool {
         return self.root == nil
+    }
+    public var count: Int {
+        guard let root = self.root else {
+            return 0
+        }
+        
+        return root.count
     }
     
     public init(root: Node?) {
