@@ -9,6 +9,11 @@ public struct binarysearchtree<T: Comparable> {
         case Postorder
     }
     
+    public var lrCount = 0
+    public var rrCount = 0
+    public var lrrCount = 0
+    public var rlrCount = 0
+    
     private var _innerTree = binarytree<T>(root: nil)
     
     private var root: Node? {
@@ -18,6 +23,14 @@ public struct binarysearchtree<T: Comparable> {
         set {
             self._innerTree.root = newValue
         }
+    }
+    
+    private var balanceFactor: Int {
+        return self.root?.balanceFactor ?? -1
+    }
+    
+    private var isBalance: Bool {
+        return abs(self.balanceFactor) < 2
     }
     
     public var isEmpty: Bool {
@@ -78,23 +91,34 @@ public struct binarysearchtree<T: Comparable> {
         }
         
         var current = self.root!
+        var inserted = current
         while true {
             if value < current.value {
                 guard let _ = current.left else {
                     let node = Node(value: value)
                     current.addLeft(node)
-                    return node
+                    inserted = node
+                    break
                 }
                 current = current.left!
             } else {
                 guard let _ = current.right else {
                     let node = Node(value: value)
                     current.addRight(node)
-                    return node
+                    inserted = node
+                    break
                 }
                 current = current.right!
             }
         }
+        
+        if !self.isBalance {
+            self.root = balance(node: self.root!)
+        }
+        
+        assert(self.isBalance, "after insert value: \(value), bst is not balance!!!")
+        
+        return inserted
     }
     
     //
@@ -102,7 +126,11 @@ public struct binarysearchtree<T: Comparable> {
     //
     @discardableResult
     public mutating func remove(value: T) -> Node? {
-        return remove(value: value, from: self.root)
+        let removed = remove(value: value, from: self.root)
+        if removed != nil && !self.isBalance {
+            self.root = balance(node: self.root!)
+        }
+        return removed
     }
     
     //
@@ -202,6 +230,83 @@ extension binarysearchtree {
         node.value = min(form: node.right)!
         return remove(value: node.value, from: node.right)!
     }
+    
+    private mutating func balance(node: Node) -> Node {
+        var newNode = node
+        switch node.balanceFactor {
+        case -2:
+            if let right = node.right, right.balanceFactor == 1 {
+                newNode = rightLeftRotation(node: node)
+                self.rlrCount += 1
+                print("ritht-left rotation +1")
+            } else {
+                newNode = leftRotation(node: node)
+                self.lrCount += 1
+                print("left rotation +1")
+            }
+            break
+        case 2:
+            if let left = node.left, left.balanceFactor == -1 {
+                newNode = leftRightRotation(node: node)
+                self.lrrCount += 1
+                print("left-right rotation +1")
+            } else {
+                newNode = rightRotation(node: node)
+                self.rrCount += 1
+                print("right rotation +1")
+            }
+            break
+        default:
+            break
+        }
+        
+        return newNode
+    }
+    
+    private func leftRotation(node: Node) -> Node {
+        guard let povit = node.right else {
+            return node
+        }
+        node.removeRight() // disconnect povit
+        let povitLeftChild = povit.removeLeft() // disconnet povit left child
+        node.addRight(povitLeftChild) // connect povit left to node right
+        povit.addLeft(node) // connect node to povit left
+        return povit
+    }
+    
+    private func rightRotation(node: Node) -> Node {
+        guard let povit = node.left else {
+            return node
+        }
+        
+        node.removeLeft()
+        let povitRightChild = povit.removeRight()
+        node.addLeft(povitRightChild)
+        povit.addRight(node)
+        return povit
+    }
+    
+    private func leftRightRotation(node: Node) -> Node {
+        guard let left = node.left,
+            let _  = left.right else {
+                return node
+        }
+        node.removeLeft()
+        let newLeft = leftRotation(node: left)
+        node.addLeft(newLeft)
+        return rightRotation(node: node)
+    }
+    
+    private func rightLeftRotation(node: Node) -> Node {
+        guard let right = node.right,
+            let _ = right.left else {
+                return node
+        }
+        node.removeRight()
+        let newRight = rightRotation(node: right)
+        node.addRight(newRight)
+        return leftRotation(node: node)
+    }
 }
 
 
@@ -231,39 +336,71 @@ extension binarytree.Node {
     public var isRightChild: Bool {
         return self.parent?.right === self
     }
+    
+    public var balanceFactor: Int {
+        return (self.left?.height ?? -1) - (self.right?.height ?? -1)
+    }
 }
 
-var testTree: binarysearchtree<Int> = [5,1,3,4,2,6,9,7,8,10]
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
-print("in order traverse:")
-testTree.traverse(operation: { (value, stop) in
-    print(value)
-}, policy: .Inorder)
+//var testTree: binarysearchtree<Int> = [5,1,3,4,2,6,9,7,8,10]
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//print("in order traverse:")
+//testTree.traverse(operation: { (value, stop) in
+//    print(value)
+//}, policy: .Inorder)
+//
+//let node_11 = testTree.insert(11)
+//print("\n\nafter insert: \(node_11)(parent:\(node_11.parent!))")
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//
+//print("\n\nafter remove: \(testTree.remove(value: 2)!.value)")
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//
+//print("\n\nafter remove: \(testTree.remove(value: 3)!.value)")
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//
+//print("\n\nafter remove: \(testTree.remove(value: 9)!.value)")
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//
+//print("\n\nafter remove: \(testTree.remove(value: 5)!.value)")
+//print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+//
+//print("in order traverse:")
+//testTree.traverse(operation: { (value, stop) in
+//    print(value)
+//}, policy: .Inorder)
+//
+//let unbanlanceTree: binarysearchtree<Int> = [1,2,3,4,5,6,7,8,9,10]
+//print("unbalance tree:\n \(unbanlanceTree)")
+//print("unbalance tree contain 6 ? : \(unbanlanceTree.contain(6))")
+//print("unbalance tree contain 11 ? : \(unbanlanceTree.contain(11))")
+//
+//let pow2 = unbanlanceTree.map {$0 * $0 }
 
-let node_11 = testTree.insert(11)
-print("\n\nafter insert: \(node_11)(parent:\(node_11.parent!))")
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+print("\n\n---------- AVL Tree -----------")
 
-print("\n\nafter remove: \(testTree.remove(value: 2)!.value)")
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+func generateRandomNumbers(count: Int, min: Int, max: Int) -> [Int] {
+    var numbers = [Int]()
+    
+    for _ in 0..<count {
+        numbers.append(Int.random(in: min...max))
+    }
+    
+    return numbers
+}
 
-print("\n\nafter remove: \(testTree.remove(value: 3)!.value)")
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+var balanceTree = binarysearchtree<Int>()
+var numbers =  generateRandomNumbers(count: 50, min: 0, max: 100)
+numbers = [Int](Set(numbers))
 
-print("\n\nafter remove: \(testTree.remove(value: 9)!.value)")
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+print("numbers: \(numbers)")
+numbers.forEach { (value) in
+    balanceTree.insert(value)
+    print("after insert \(value), balance tree: \n\(balanceTree)")
+}
 
-print("\n\nafter remove: \(testTree.remove(value: 5)!.value)")
-print("\(testTree), cout: \(testTree.count), min: \(testTree.min!), max: \(testTree.max!)")
+print("lefr rotattion count: \(balanceTree.lrCount)")
+print("right rotattion count: \(balanceTree.rrCount)")
+print("left-right rotattion count: \(balanceTree.lrrCount)")
+print("right-lefr rotattion count: \(balanceTree.rlrCount)")
 
-print("in order traverse:")
-testTree.traverse(operation: { (value, stop) in
-    print(value)
-}, policy: .Inorder)
-
-let unbanlanceTree: binarysearchtree<Int> = [1,2,3,4,5,6,7,8,9,10]
-print("unbalance tree:\n \(unbanlanceTree)")
-print("unbalance tree contain 6 ? : \(unbanlanceTree.contain(6))")
-print("unbalance tree contain 11 ? : \(unbanlanceTree.contain(11))")
-let pow2 = unbanlanceTree.map {$0 * $0 }
-print("^2 of unbalance tree: \(pow2)")

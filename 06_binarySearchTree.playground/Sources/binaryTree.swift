@@ -20,6 +20,13 @@ public struct binarytree<T> {
         public var count: Int {
             return (self.left?.count ?? 0) + 1 + (self.right?.count ?? 0)
         }
+        public var height: Int {
+            if self.left == nil && self.right == nil {
+                return 0
+            }
+            
+            return max(self.left?.height ?? -1, self.right?.height ?? -1) + 1
+        }
         
         @discardableResult
         public func addLeft(_ node: Node?) -> Node? {
@@ -153,10 +160,10 @@ extension binarytree.Node: CustomStringConvertible {
         }
         
         if node.left == nil && node.right == nil {
-            return root + "\(node.value)\n"
+            return root + "\(node.value)(h:\(node.height))\n"
         }
          
         return diagram(from: node.right, top: top + " ", root: top + "┌──", bottom: top + "│ ")
-            + root + "\(node.value)\n" + diagram(from: node.left, top: bottom + "│ ", root: bottom + "└──", bottom: bottom + " ")
+            + root + "\(node.value)(h:\(node.height))\n" + diagram(from: node.left, top: bottom + "│ ", root: bottom + "└──", bottom: bottom + " ")
     }
 }
